@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>StreamClipper Settings</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-dark text-white p-5">
+  <div class="container">
+    <h2>⚙️ StreamClipper Settings</h2>
+    <form method="POST" class="row g-3 mt-4">
+      <div class="col-md-6">
+        <input type="text" name="channel" placeholder="YouTube Channel ID" class="form-control" required>
+      </div>
+      <div class="col-md-6">
+        <input type="url" name="webhook" placeholder="Discord Webhook URL" class="form-control" required>
+      </div>
+      <div class="col-12">
+        <button class="btn btn-success w-100">Add / Update Webhook</button>
+      </div>
+    </form>
+
+    <h4 class="mt-5">📺 Registered Channels</h4>
+    <table class="table table-dark table-bordered mt-3">
+      <thead>
+        <tr><th>Channel ID</th><th>Webhook</th></tr>
+      </thead>
+      <tbody>
+        {% for channel, webhook in data %}
+        <tr>
+          <td>{{ channel }}</td>
+          <td>{{ webhook }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <a href="/logout" class="btn btn-danger mt-4">Logout</a>
+  </div>
+</body>
+</html>
