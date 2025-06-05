@@ -4,7 +4,6 @@ import sqlite3
 import requests
 from bs4 import BeautifulSoup
 from yt_dlp import YoutubeDL
-from chat_downloader import ChatDownloader
 from chat_downloader.sites import YouTubeChatDownloader
 import scrapetube
 from models import Channel, User
@@ -29,19 +28,7 @@ def get_avatar(channel_id):
         print("⚠️ Failed to fetch avatar:", e)
         return None
 
-def get_video_for_chat(chat_id, channel_id):
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        cur = conn.cursor()
-        cur.execute("CREATE TABLE IF NOT EXISTS chat_mapping (chat TEXT, video TEXT)")
-        cur.execute("SELECT video FROM chat_mapping WHERE chat=?", (chat_id,))
-        row = cur.fetchone()
-        conn.close()
-        if row:
-            return YouTubeChatDownloader(cookies=COOKIES_FILE).get_video_data(video_id=row[0])
-    except Exception as e:
-        print("DB lookup error:", e)
-
+def get_video_for_channel(channel_id):
     try:
         print("🔍 Checking live videos for:", channel_id)
         videos = scrapetube.get_channel(channel_id, content_type="streams", limit=3)
@@ -52,11 +39,6 @@ def get_video_for_chat(chat_id, channel_id):
                 print("🎥 Live stream found:", vid_id)
                 try:
                     stream = YouTubeChatDownloader(cookies=COOKIES_FILE).get_video_data(video_id=vid_id)
-                    conn = sqlite3.connect(DB_PATH)
-                    cur = conn.cursor()
-                    cur.execute("REPLACE INTO chat_mapping VALUES (?, ?)", (chat_id, vid_id))
-                    conn.commit()
-                    conn.close()
                     return stream
                 except Exception as e:
                     print("⚠️ ChatDownloader failed for", vid_id, ":", e)
@@ -78,6 +60,7 @@ def seconds_to_hms(seconds):
 def send_discord_webhook(clip_id, title, hms, url, delay, user, avatar, video_id):
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
+    cur.execute("CREATE TABLE IF NOT EXISTS settings (channel TEXT PRIMARY KEY, webhook TEXT)")
     cur.execute("SELECT webhook FROM settings WHERE channel=?", (video_id,))
     row = cur.fetchone()
     conn.close()

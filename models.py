@@ -1,6 +1,7 @@
+from urllib.parse import parse_qs
+
 class User:
     def __init__(self, header):
-        from urllib.parse import parse_qs
         parsed = parse_qs(header)
         self.name = parsed.get("displayName", ["Unknown"])[0].replace("+", " ")
         self.level = parsed.get("userLevel", [""])[0].lower()

@@ -1,4 +1,5 @@
-import os, shutil
+import os
+import shutil
 from flask import Flask, request, redirect, render_template, session
 from dotenv import load_dotenv
 from clip import create_clip, delete_clip
@@ -10,7 +11,7 @@ os.makedirs("/tmp", exist_ok=True)
 shutil.copy("/etc/secrets/cookies.txt", "/tmp/cookies.txt")
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY")
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "devsecret")
 DB_PATH = "data/queries.db"
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 

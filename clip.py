@@ -9,7 +9,7 @@ def create_clip(chat_id, query, headers):
     title = get_clip_title(query)
     channel = Channel(headers.get("Nightbot-Channel", "").split("=")[-1])
 
-    stream = get_video_for_chat(chat_id, channel.id)
+    stream = get_video_for_channel(channel.id)
     if not stream:
         return "❌ No LiveStream Found. or failed to fetch the stream. Please try again later."
 
