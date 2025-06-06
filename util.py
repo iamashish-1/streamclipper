@@ -39,6 +39,7 @@ def get_video_for_channel(channel_id):
                 print("🎥 Live stream found:", vid_id)
                 try:
                     stream = YouTubeChatDownloader(cookies=COOKIES_FILE).get_video_data(video_id=vid_id)
+                    print(f"Got video start time : {stream} ")
                     return stream
                 except Exception as e:
                     print("⚠️ ChatDownloader failed for", vid_id, ":", e)
