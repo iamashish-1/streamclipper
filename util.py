@@ -2,7 +2,9 @@ import sqlite3
 import requests
 from bs4 import BeautifulSoup
 from chat_downloader.sites import YouTubeChatDownloader
+from yt_dlp import YoutubeDL
 import scrapetube
+from models import Channel, User
 
 DB_PATH = "data/queries.db"
 COOKIES_FILE = "/tmp/cookies.txt"
