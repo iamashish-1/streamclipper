@@ -1,8 +1,10 @@
+import os
+import time
 import sqlite3
 import requests
 from bs4 import BeautifulSoup
-from chat_downloader.sites import YouTubeChatDownloader
 from yt_dlp import YoutubeDL
+from chat_downloader.sites import YouTubeChatDownloader
 import scrapetube
 from models import Channel, User
 
@@ -37,7 +39,7 @@ def get_video_for_channel(channel_id):
                 print("🎥 Live stream found:", vid_id)
                 try:
                     stream = YouTubeChatDownloader(cookies=COOKIES_FILE).get_video_data(video_id=vid_id)
-                    print(f"Got video start time : {stream} ")
+                    print(f"Meta data fetched : {stream}")
                     return stream
                 except Exception as e:
                     print("⚠️ ChatDownloader failed for", vid_id, ":", e)
