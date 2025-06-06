@@ -1,27 +1,25 @@
+import sqlite3
+from urllib.parse import parse_qs
+
+DB_PATH = "data/queries.db"
+
 class User:
     def __init__(self, headers):
-        from urllib.parse import parse_qs
         raw = headers.get("Nightbot-User", "")
-        parts = parse_qs(raw)
-        self.id = parts.get("providerId", [""])[0]
-        self.name = parts.get("displayName", ["Unknown"])[0].replace("+", " ")
-        self.level = parts.get("userLevel", [""])[0].lower()
-        self.avatar = None
-
-    def __str__(self):
-        return f"{self.name} ({self.level})"
-
+        parsed = parse_qs(raw)
+        self.name = parsed.get("displayName", ["Unknown"])[0].replace("+", " ")
+        self.level = parsed.get("userLevel", [""])[0].lower()
+        self.id = parsed.get("providerId", [""])[0]
 
 class Channel:
-    def __init__(self, channel_id, db_path):
-        import sqlite3
-        self.id = channel_id
-        self.webhook = None
+    def __init__(self, channel_id, db_path=DB_PATH):
+        self.channel_id = channel_id
+        self.db_path = db_path
 
-        conn = sqlite3.connect(db_path)
+    def get_webhook(self):
+        conn = sqlite3.connect(self.db_path)
         cur = conn.cursor()
-        cur.execute("SELECT webhook FROM settings WHERE channel=?", (channel_id,))
+        cur.execute("SELECT webhook FROM settings WHERE channel=?", (self.channel_id,))
         row = cur.fetchone()
         conn.close()
-        if row:
-            self.webhook = row[0]
+        return row[0] if row else None
