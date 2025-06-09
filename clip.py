@@ -30,7 +30,7 @@ def create_clip(chat_id, query, headers):
     title = query.replace("+", " ") if query else "Untitled"
     url = f"<https://youtu.be/{video_id}?t={clip_time}>"
 
-    success = send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id)
+    success = send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id, video_id)
 
     return f"Streamclipper successfully created clip [{clip_id}] — '{title}' by @{user.name}, with a delay of {delay} seconds. The clip was successfully sent to Discord." if success else "✅ Clip created, but failed to notify Discord."
 

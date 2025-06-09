@@ -8,7 +8,7 @@ import scrapetube
 from models import User
 
 DB_PATH = "data/queries.db"
-COOKIES_FILE = os.getenv("YOUTUBE_COOKIES")  # Load from env or fallback to ./cookies.txt
+COOKIES_FILE = os.getenv("YOUTUBE_COOKIES")
 
 role_icons = {
     "moderator": "🛡️",
@@ -76,7 +76,7 @@ def seconds_to_hms(seconds):
     s = seconds % 60
     return f"{h}:{m:02}:{s:02}"
 
-def send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id):
+def send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id, video_id=None):
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
     cur.execute("SELECT webhook FROM settings WHERE channel=?", (channel_id,))
@@ -104,10 +104,11 @@ def send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id):
                 message_id = r.json().get("id") if r.headers.get("Content-Type", "").startswith(
                     "application/json") else None
                 if message_id:
-                    conn = sqlite3.connect("queries.db")
+                    conn = sqlite3.connect(DB_PATH)
                     cur = conn.cursor()
+                    cur.execute("CREATE TABLE IF NOT EXISTS clips (clip_id TEXT PRIMARY KEY, channel TEXT, message_id TEXT)")
                     cur.execute("INSERT OR REPLACE INTO clips (clip_id, channel, message_id) VALUES (?, ?, ?)", (
-                        clip_id, video_id, message_id
+                        clip_id, channel_id, message_id
                     ))
                     conn.commit()
                     conn.close()

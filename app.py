@@ -32,17 +32,9 @@ def init_db():
         )""")
         conn.commit()
 
-# Auto-remove clips older than 1 day
-def cleanup_old_clips():
-    with sqlite3.connect(DB_PATH) as conn:
-        cur = conn.cursor()
-        cur.execute("DELETE FROM clips WHERE time_created <= datetime('now', '-1 day')")
-        conn.commit()
-
 @app.before_request
 def before_every_request():
     init_db()
-    cleanup_old_clips()
 
 @app.route("/")
 def home():
