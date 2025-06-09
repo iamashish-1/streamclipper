@@ -1,11 +1,15 @@
 import time
+
+from openpyxl.styles.builtins import title
+
 from util import (
     get_user_details_from_headers,
     get_stream_metadata,
     seconds_to_hms,
     send_discord_webhook
 )
-from models import User
+import sqlite3
+from discord_webhook import DiscordWebhook
 
 def create_clip(chat_id, query, headers):
     user = get_user_details_from_headers(headers)
@@ -30,42 +34,44 @@ def create_clip(chat_id, query, headers):
 
     success = send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id)
 
-    return f"Streamclipper successfully clipped '{title}' - Clip id : {clip_id} by {user.name} with a dealy of {delay} seconds. Clip sent to discord successfully. " if success else "✅ Clip created, but failed to notify Discord."
+    return f"Streamclipper successfully created clip [{clip_id}] — '{title}' by {user.name}, with a delay of {delay} seconds. The clip was successfully sent to Discord." if success else "✅ Clip created, but failed to notify Discord."
+
 
 def delete_clip(clip_id):
-    import sqlite3
-    import requests
-    conn = sqlite3.connect("data/queries.db")
+    conn = sqlite3.connect("queries.db")
     cur = conn.cursor()
-    cur.execute("SELECT channel FROM chat_mapping WHERE chat LIKE ?", (f"%{clip_id[:3]}%",))
+
+    # looking for channel id and webhook from db
+    cur.execute("SELECT channel, webhook FROM settings WHERE channel=?", (clip_id,))
     row = cur.fetchone()
-    conn.close()
-
     if not row:
-        return "❌ Clip not found in database."
+        return f"❌ Clip {clip_id} not found."
 
-    webhook = None
-    conn = sqlite3.connect("data/queries.db")
-    cur = conn.cursor()
-    cur.execute("SELECT webhook FROM settings WHERE channel=?", (row[0],))
-    row2 = cur.fetchone()
-    conn.close()
+    channel_id, webhook_url = row
 
-    if not row2:
-        return "❌ Webhook not found."
-
-    webhook = row2[0]
-
+    #deletion in db with the help of clip id
     try:
-        r = requests.get(webhook)
-        if r.ok:
-            messages = r.json()
-            for msg in messages:
-                if clip_id in msg.get("content", ""):
-                    del_url = f"{webhook}/messages/{msg['id']}"
-                    requests.delete(del_url)
-                    return f"🗑️ Deleted message {msg['id']}"
+        cur.execute(
+            "DELETE FROM QUERIES WHERE channel_id=? AND message_id LIKE ?",
+            (channel_id, f"%{clip_id[:3]}"),
+        )
+        conn.commit()
     except Exception as e:
-        return f"❌ Delete error: {e}"
+        print(f"❌ Error during DB deletion: {e}")
+        conn.close()
+        return f"❌ Error during deletion process."
 
-    return "❌ Clip not found in messages."
+    #attempting to delete msg if webhook url is there
+    if webhook_url:
+        try:
+            webhook = DiscordWebhook(
+                url=webhook_url,
+                id=clip_id,
+                allowed_mentions={"role": [], "user": [], "everyone": False}
+            )
+            webhook.delete()  # Delete the Discord webhook message
+        except Exception as e:
+            print(f"❌ Error deleting Discord webhook: {e}")
+
+    conn.close()
+    return f"✅ Clip {clip_id} - '{title} deleted successfully."
