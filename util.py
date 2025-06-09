@@ -96,29 +96,23 @@ def send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id, vide
 
     if user.avatar and user.avatar.startswith("https://"):
         payload["avatar_url"] = user.avatar
-        
+
     try:
-        r = requests.post(webhook, json=payload)
+        r = requests.post(webhook + "?wait=true", json=payload)
         if r.status_code in [200, 204]:
-            message_id = None
-            if r.headers.get("Content-Type", "").startswith("application/json"):
-                try:
-                    message_id = r.json().get("id")
-                except Exception as e:
-                    print("⚠️ Could not parse Discord response JSON:", e)
-
-            if message_id:
-                print("💾 Saving clip to DB:", clip_id, channel_id, message_id)
-                conn = sqlite3.connect(DB_PATH)
-                cur = conn.cursor()
-                cur.execute("INSERT OR REPLACE INTO clips (clip_id, channel, message_id) VALUES (?, ?, ?)", (
-                    clip_id, channel_id, message_id
-                ))
-                conn.commit()
-                conn.close()
-            else:
-                print("⚠️ No message ID returned from Discord")
-
+            try:
+                message_id = r.json().get("id")
+                if message_id:
+                    conn = sqlite3.connect(DB_PATH)
+                    cur = conn.cursor()
+                    cur.execute(
+                        "INSERT OR REPLACE INTO clips (clip_id, channel, message_id) VALUES (?, ?, ?)",
+                        (clip_id, channel_id, message_id)
+                    )
+                    conn.commit()
+                    conn.close()
+            except Exception as e:
+                print("⚠️ Failed to store clip metadata:", e)
         return r.status_code in [200, 204]
     except Exception as e:
         print("Webhook send error:", e)
