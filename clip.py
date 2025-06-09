@@ -39,6 +39,8 @@ def delete_clip(clip_id):
     conn = sqlite3.connect("queries.db")
     cur = conn.cursor()
 
+    cur.execute("CREATE TABLE IF NOT EXISTS settings (channel TEXT PRIMARY KEY, webhook TEXT)")
+
     # looking for channel id and webhook from db
     cur.execute("SELECT channel, webhook FROM settings WHERE channel=?", (clip_id,))
     row = cur.fetchone()

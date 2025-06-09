@@ -1,10 +1,8 @@
 import os
-import time
 import sqlite3
 import requests
 from urllib.parse import parse_qs
 from bs4 import BeautifulSoup
-from yt_dlp import YoutubeDL
 from chat_downloader.sites import YouTubeChatDownloader
 import scrapetube
 from models import User
