@@ -32,10 +32,11 @@ def settings():
     cur = conn.cursor()
     cur.execute("CREATE TABLE IF NOT EXISTS settings (channel TEXT PRIMARY KEY, webhook TEXT)")
     if request.method == "POST":
-        channel = request.form["channel"]
-        webhook = request.form["webhook"]
-        cur.execute("REPLACE INTO settings (channel, webhook) VALUES (?, ?)", (channel, webhook))
-        conn.commit()
+        channel = request.form.get("channel", "").strip()
+        webhook = request.form.get("webhook", "").strip()
+        if channel and webhook:
+            cur.execute("REPLACE INTO settings (channel, webhook) VALUES (?, ?)", (channel, webhook))
+            conn.commit()
     rows = cur.execute("SELECT * FROM settings").fetchall()
     conn.close()
     return render_template("settings.html", rows=rows)
