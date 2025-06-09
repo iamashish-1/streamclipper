@@ -1,7 +1,5 @@
 import time
 
-from openpyxl.styles.builtins import title
-
 from util import (
     get_user_details_from_headers,
     get_stream_metadata,
@@ -74,4 +72,4 @@ def delete_clip(clip_id):
             print(f"❌ Error deleting Discord webhook: {e}")
 
     conn.close()
-    return f"✅ Clip {clip_id} - '{title} deleted successfully."
+    return f"✅ Clip {clip_id} deleted successfully."
