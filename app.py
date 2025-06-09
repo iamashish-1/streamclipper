@@ -1,46 +1,29 @@
 import os
-import shutil
+import sqlite3
 from flask import Flask, request, redirect, render_template, session
-from dotenv import load_dotenv
 from clip import create_clip, delete_clip
 from auth import login_required
-import sqlite3
+from dotenv import load_dotenv
 
 load_dotenv()
-os.makedirs("/tmp", exist_ok=True)
-shutil.copy("/etc/secrets/cookies.txt", "/tmp/cookies.txt")
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "devsecret")
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "streamclipper_dev_secret")
+
 DB_PATH = "data/queries.db"
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 @app.route("/")
-def index():
-    return "✅ StreamClipper is live."
+def home():
+    return "✅ StreamClipper is running."
 
-@app.route("/clip/<chatid>/<query>")
-def clip(chatid, query):
-    return create_clip(chatid, query, request.headers)
+@app.route("/clip/<chat_id>/<query>")
+def clip(chat_id, query):
+    return create_clip(chat_id, query, request.headers)
 
 @app.route("/delete/<clip_id>")
 def delete(clip_id):
     return delete_clip(clip_id)
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        user, pw = request.form["username"], request.form["password"]
-        if user == os.getenv("ADMIN_USER") and pw == os.getenv("ADMIN_PASS"):
-            session["admin"] = True
-            return redirect("/settings")
-        return render_template("login.html", error="❌ Invalid credentials.")
-    return render_template("login.html")
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/login")
 
 @app.route("/settings", methods=["GET", "POST"])
 @login_required
@@ -49,10 +32,33 @@ def settings():
     cur = conn.cursor()
     cur.execute("CREATE TABLE IF NOT EXISTS settings (channel TEXT PRIMARY KEY, webhook TEXT)")
     if request.method == "POST":
-        cur.execute("REPLACE INTO settings VALUES (?, ?)", (
-            request.form["channel"], request.form["webhook"]))
+        channel = request.form["channel"]
+        webhook = request.form["webhook"]
+        cur.execute("REPLACE INTO settings (channel, webhook) VALUES (?, ?)", (channel, webhook))
         conn.commit()
-    cur.execute("SELECT * FROM settings")
-    data = cur.fetchall()
+    rows = cur.execute("SELECT * FROM settings").fetchall()
     conn.close()
-    return render_template("settings.html", data=data)
+    return render_template("settings.html", rows=rows)
+
+@app.route("/webhooks")
+@login_required
+def webhooks():
+    conn = sqlite3.connect(DB_PATH)
+    rows = conn.execute("SELECT * FROM settings").fetchall()
+    conn.close()
+    return render_template("webhooks.html", rows=rows)
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        u = request.form["username"]
+        p = request.form["password"]
+        if u == os.getenv("ADMIN_USER") and p == os.getenv("ADMIN_PASS"):
+            session["admin"] = True
+            return redirect("/settings")
+    return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")

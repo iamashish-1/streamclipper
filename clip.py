@@ -1,63 +1,70 @@
 import time
-import sqlite3
-from util import *
-from models import User, Channel
-from chat_downloader import ChatDownloader
+from util import (
+    get_user_details_from_headers,
+    get_stream_metadata,
+    seconds_to_hms,
+    send_discord_webhook
+)
 
 def create_clip(chat_id, query, headers):
-    user = User(headers.get("Nightbot-User", ""))
-    title = get_clip_title(query)
-    channel = Channel(headers.get("Nightbot-Channel", "").split("=")[-1])
+    user = get_user_details_from_headers(headers)
+    channel_id = user.id[:24]
 
-    stream = get_video_for_channel(channel.id)
-    if not stream:
-        return "❌ No LiveStream Found. or failed to fetch the stream. Please try again later."
+    metadata = get_stream_metadata(channel_id, chat_id)
+    if not metadata or "start_time" not in metadata:
+        return "❌ Unable to locate active live stream."
 
-    try:
-        chat_iter = ChatDownloader().get_chat(stream["original_video_id"])
-        matched = None
-        for chat in chat_iter:
-            if chat["message_id"] == chat_id:
-                matched = chat
-                break
-    except Exception as e:
-        return f"❌ ChatDownloader error: {e}"
+    timestamp_usec = int(headers.get("Nightbot-Message-Timestamp", "0"))
+    if not timestamp_usec:
+        timestamp_usec = int(time.time() * 1_000_000)
 
-    if not matched:
-        return "❌ Chat message not found in stream chat."
+    delay = int(headers.get("delay", "-30"))
+    stream_start = int(metadata["start_time"])
+    video_id = metadata.get("original_video_id") or metadata.get("video_id")
+    clip_time = (timestamp_usec - stream_start) // 1_000_000 + delay
+    hms = seconds_to_hms(clip_time)
+    clip_id = chat_id[-3:].upper() + str(timestamp_usec % 100000)
+    title = query.replace("+", " ") if query else "Untitled"
+    url = f"https://youtu.be/{video_id}?t={clip_time}"
 
-    timestamp_usec = matched["timestamp"]
-    stream_start_usec = stream["start_time"]
-    offset_sec = round((timestamp_usec - stream_start_usec) / 1_000_000)
+    success = send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id)
 
-    delay = int(headers.get("delay", -30))
-    final_time = offset_sec + delay
-    clip_id = generate_clip_id(chat_id, timestamp_usec)
-    hms = seconds_to_hms(final_time)
-    url = f"https://youtu.be/{stream['original_video_id']}?t={final_time}"
-
-    avatar = get_avatar(user.id)
-    msg_id = send_discord_webhook(clip_id, title, hms, url, delay, user, avatar, stream["original_video_id"])
-
-    if msg_id:
-        conn = sqlite3.connect(DB_PATH)
-        cur = conn.cursor()
-        cur.execute("CREATE TABLE IF NOT EXISTS clips (clip_id TEXT, video_id TEXT, message_id TEXT)")
-        cur.execute("REPLACE INTO clips VALUES (?, ?, ?)", (clip_id, stream["original_video_id"], msg_id))
-        conn.commit()
-        conn.close()
-
-    return url
+    return url if success else "✅ Clip created, but failed to notify Discord."
 
 def delete_clip(clip_id):
-    conn = sqlite3.connect(DB_PATH)
+    import sqlite3
+    import requests
+    conn = sqlite3.connect("data/queries.db")
     cur = conn.cursor()
-    cur.execute("SELECT video_id, message_id FROM clips WHERE clip_id=?", (clip_id,))
+    cur.execute("SELECT channel FROM chat_mapping WHERE chat LIKE ?", (f"%{clip_id[:3]}%",))
     row = cur.fetchone()
-    if row:
-        video_id, msg_id = row
-        delete_discord_message(video_id, msg_id)
-        cur.execute("DELETE FROM clips WHERE clip_id=?", (clip_id,))
-        conn.commit()
     conn.close()
-    return "🗑️ Deleted clip successfully."
+
+    if not row:
+        return "❌ Clip not found in database."
+
+    webhook = None
+    conn = sqlite3.connect("data/queries.db")
+    cur = conn.cursor()
+    cur.execute("SELECT webhook FROM settings WHERE channel=?", (row[0],))
+    row2 = cur.fetchone()
+    conn.close()
+
+    if not row2:
+        return "❌ Webhook not found."
+
+    webhook = row2[0]
+
+    try:
+        r = requests.get(webhook)
+        if r.ok:
+            messages = r.json()
+            for msg in messages:
+                if clip_id in msg.get("content", ""):
+                    del_url = f"{webhook}/messages/{msg['id']}"
+                    requests.delete(del_url)
+                    return f"🗑️ Deleted message {msg['id']}"
+    except Exception as e:
+        return f"❌ Delete error: {e}"
+
+    return "❌ Clip not found in messages."

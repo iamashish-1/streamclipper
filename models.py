@@ -1,13 +1,6 @@
-from urllib.parse import parse_qs
-
 class User:
-    def __init__(self, header):
-        parsed = parse_qs(header)
-        self.name = parsed.get("displayName", ["Unknown"])[0].replace("+", " ")
-        self.level = parsed.get("userLevel", [""])[0].lower()
-        self.id = parsed.get("providerId", [""])[0]
-
-class Channel:
-    def __init__(self, channel_id, webhook=None):
-        self.id = channel_id
-        self.webhook = webhook
+    def __init__(self, provider_id, display_name, user_level):
+        self.id = provider_id
+        self.name = display_name
+        self.level = user_level
+        self.avatar = None

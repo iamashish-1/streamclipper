@@ -2,14 +2,15 @@ import os
 import time
 import sqlite3
 import requests
+from urllib.parse import parse_qs
 from bs4 import BeautifulSoup
 from yt_dlp import YoutubeDL
 from chat_downloader.sites import YouTubeChatDownloader
 import scrapetube
-from models import Channel, User
+from models import User
 
 DB_PATH = "data/queries.db"
-COOKIES_FILE = "/tmp/cookies.txt"
+COOKIES_FILE = os.getenv("YOUTUBE_COOKIES")  # Load from env or fallback to ./cookies.txt
 
 role_icons = {
     "moderator": "🛡️",
@@ -18,39 +19,58 @@ role_icons = {
     "": ""
 }
 
-def get_avatar(channel_id):
-    try:
-        url = f"https://www.youtube.com/channel/{channel_id}"
-        r = requests.get(url, timeout=5)
-        soup = BeautifulSoup(r.text, "html.parser")
-        return soup.find("meta", property="og:image")["content"]
-    except Exception as e:
-        print("⚠️ Failed to fetch avatar:", e)
-        return None
+def get_user_details_from_headers(headers):
+    user_header = headers.get("Nightbot-User", "")
+    qs = parse_qs(user_header)
+    provider_id = qs.get("providerId", [""])[0]
+    display_name = qs.get("displayName", ["Unknown"])[0].replace("+", " ")
+    level = qs.get("userLevel", [""])[0].lower()
 
-def get_video_for_channel(channel_id):
+    user = User(provider_id, display_name, level)
+
     try:
-        print("🔍 Checking live videos for:", channel_id)
-        videos = scrapetube.get_channel(channel_id, content_type="streams", limit=3)
-        for vid in videos:
-            overlays = vid.get("thumbnailOverlays", [{}])
-            if overlays and overlays[0].get("thumbnailOverlayTimeStatusRenderer", {}).get("style") == "LIVE":
+        soup = BeautifulSoup(
+            requests.get(f"https://youtube.com/channel/{user.id}", timeout=5).text,
+            "html.parser"
+        )
+        user.avatar = soup.find("meta", property="og:image")["content"]
+    except Exception as e:
+        print("Failed to fetch avatar:", e)
+
+    return user
+
+def get_stream_metadata(channel_id, chat_id):
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cur = conn.cursor()
+        cur.execute("CREATE TABLE IF NOT EXISTS chat_mapping (chat TEXT, video TEXT)")
+        cur.execute("SELECT video FROM chat_mapping WHERE chat=?", (chat_id,))
+        row = cur.fetchone()
+        conn.close()
+        if row:
+            vid_id = row[0]
+            return YouTubeChatDownloader(cookies=COOKIES_FILE).get_video_data(video_id=vid_id)
+
+        print(f"🔍 Checking live videos for: {channel_id}")
+        vids = scrapetube.get_channel(channel_id, content_type="streams", limit=3)
+        for vid in vids:
+            if vid["thumbnailOverlays"][0]["thumbnailOverlayTimeStatusRenderer"]["style"] == "LIVE":
                 vid_id = vid["videoId"]
-                print("🎥 Live stream found:", vid_id)
-                try:
-                    stream = YouTubeChatDownloader(cookies=COOKIES_FILE).get_video_data(video_id=vid_id)
-                    print(f"Meta data fetched : {stream}")
-                    return stream
-                except Exception as e:
-                    print("⚠️ ChatDownloader failed for", vid_id, ":", e)
+                print(f"🎥 Live stream found: {vid_id}")
+                data = YouTubeChatDownloader(cookies=COOKIES_FILE).get_video_data(video_id=vid_id)
+
+                conn = sqlite3.connect(DB_PATH)
+                cur = conn.cursor()
+                cur.execute("REPLACE INTO chat_mapping VALUES (?, ?)", (chat_id, vid_id))
+                conn.commit()
+                conn.close()
+                print(data)
+                return data
     except Exception as e:
         print("❌ scrapetube or YTCD failed:", e)
 
     print("⚠️ No valid live video found.")
     return None
-
-def generate_clip_id(chat_id, timestamp):
-    return chat_id[-3:].upper() + str(timestamp % 100000)
 
 def seconds_to_hms(seconds):
     h = seconds // 3600
@@ -58,52 +78,30 @@ def seconds_to_hms(seconds):
     s = seconds % 60
     return f"{h}:{m:02}:{s:02}"
 
-def send_discord_webhook(clip_id, title, hms, url, delay, user, avatar, video_id):
+def send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id):
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-    cur.execute("CREATE TABLE IF NOT EXISTS settings (channel TEXT PRIMARY KEY, webhook TEXT)")
-    cur.execute("SELECT webhook FROM settings WHERE channel=?", (video_id,))
+    cur.execute("SELECT webhook FROM settings WHERE channel=?", (channel_id,))
     row = cur.fetchone()
     conn.close()
-
     if not row:
-        return None
+        return False
 
     webhook = row[0]
-    emoji = role_icons.get(user.level, "")
+    emoji = role_icons.get(user.level.lower(), "")
     username = f"{user.name} {emoji}".strip()
 
-    message = f"{clip_id} | {title}\n\n{hms}\n{url}\n\nDelayed by {delay} seconds."
     payload = {
         "username": username,
-        "content": message
+        "content": f"{clip_id} | {title}\n\n{hms}\n{url}\n\nDelayed by {delay} seconds."
     }
-    if avatar:
-        payload["avatar_url"] = avatar
+
+    if user.avatar and user.avatar.startswith("https://"):
+        payload["avatar_url"] = user.avatar
 
     try:
         r = requests.post(webhook, json=payload)
-        if r.status_code in [200, 204]:
-            return r.headers.get("X-Message-ID")
+        return r.status_code in [200, 204]
     except Exception as e:
-        print("Webhook error:", e)
-    return None
-
-def delete_discord_message(video_id, message_id):
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute("SELECT webhook FROM settings WHERE channel=?", (video_id,))
-    row = cur.fetchone()
-    conn.close()
-
-    if row:
-        webhook = row[0].rstrip("/")
-        try:
-            r = requests.delete(f"{webhook}/messages/{message_id}")
-            return r.status_code == 204
-        except Exception as e:
-            print("Webhook delete error:", e)
-    return False
-
-def get_clip_title(query):
-    return query.replace("+", " ") if query else "Untitled"
+        print("Webhook send error:", e)
+        return False
