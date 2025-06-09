@@ -50,7 +50,7 @@ def get_stream_metadata(channel_id, chat_id):
             return YouTubeChatDownloader(cookies=COOKIES_FILE).get_video_data(video_id=vid_id)
 
         print(f"🔍 Checking live videos for: {channel_id}")
-        vids = scrapetube.get_channel(channel_id, content_type="streams", limit=3)
+        vids = scrapetube.get_channel(channel_id, limit=3)
         for vid in vids:
             if vid["thumbnailOverlays"][0]["thumbnailOverlayTimeStatusRenderer"]["style"] == "LIVE":
                 vid_id = vid["videoId"]
