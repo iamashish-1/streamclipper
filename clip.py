@@ -39,50 +39,31 @@ def delete_clip(clip_id):
     conn = sqlite3.connect("queries.db")
     cur = conn.cursor()
 
-    # Find the clip in the database based on ID suffix and timestamp window
-    cur.execute("""
-        SELECT channel_id, message_id, time_in_seconds, webhook
-        FROM queries
-        WHERE message_id LIKE ?
-    """, (f"%{clip_id[:3]}",))
+    cur.execute("SELECT channel, message_id FROM clips WHERE clip_id=?", (clip_id,))
+    result = cur.fetchone()
 
-    clip = cur.fetchone()
-
-    if not clip:
-        conn.close()
+    if not result:
         return f"❌ Clip {clip_id} not found."
 
-    channel_id, message_id, clip_time, webhook_id = clip
+    channel, message_id = result
 
-    # Delete from database using precise match
-    cur.execute("""
-        DELETE FROM queries
-        WHERE channel_id = ? AND message_id LIKE ? AND time_in_seconds BETWEEN ? AND ?
-    """, (
-        channel_id,
-        f"%{clip_id[:3]}",
-        clip_time - 1,
-        clip_time + 1
-    ))
-    conn.commit()
-
-    # Get the webhook URL from settings
-    cur.execute("SELECT webhook FROM settings WHERE channel = ?", (channel_id,))
+    cur.execute("SELECT webhook FROM settings WHERE channel=?", (channel,))
     row = cur.fetchone()
+    if not row:
+        return f"⚠️ Webhook not found for channel {channel}."
+
+    webhook_url = row[0]
+
+    try:
+        webhook = DiscordWebhook(url=webhook_url, id=message_id)
+        webhook.delete()
+        print(f"🗑️ Deleted Discord message: {message_id}")
+    except Exception as e:
+        print(f"⚠️ Failed to delete Discord message: {e}")
+
+    cur.execute("DELETE FROM clips WHERE clip_id=?", (clip_id,))
+    conn.commit()
     conn.close()
 
-    if row and webhook_id:
-        try:
-            from discord_webhook import DiscordWebhook
-            webhook_url = row[0]
-            webhook = DiscordWebhook(
-                url=webhook_url,
-                id=webhook_id,
-                allowed_mentions={"role": [], "user": [], "everyone": False}
-            )
-            webhook.delete()
-        except Exception as e:
-            print(f"❌ Failed to delete webhook message: {e}")
-
-    return f"✅ Clip {clip_id} deleted successfully."
+    return f"✅ Deleted {clip_id}"
 

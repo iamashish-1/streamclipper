@@ -99,6 +99,20 @@ def send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id):
 
     try:
         r = requests.post(webhook, json=payload)
+        if r.status_code in [200, 204]:
+            try:
+                message_id = r.json().get("id") if r.headers.get("Content-Type", "").startswith(
+                    "application/json") else None
+                if message_id:
+                    conn = sqlite3.connect("queries.db")
+                    cur = conn.cursor()
+                    cur.execute("INSERT OR REPLACE INTO clips (clip_id, channel, message_id) VALUES (?, ?, ?)", (
+                        clip_id, video_id, message_id
+                    ))
+                    conn.commit()
+                    conn.close()
+            except Exception as e:
+                print("⚠️ Failed to store clip metadata:", e)
         return r.status_code in [200, 204]
     except Exception as e:
         print("Webhook send error:", e)

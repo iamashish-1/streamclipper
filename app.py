@@ -4,6 +4,7 @@ from flask import Flask, request, redirect, render_template, session
 from clip import create_clip, delete_clip
 from auth import login_required
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 
 load_dotenv()
 
@@ -12,6 +13,36 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
 DB_PATH = "data/queries.db"
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+
+# Ensure required tables exist
+def init_db():
+    with sqlite3.connect(DB_PATH) as conn:
+        cur = conn.cursor()
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS settings (
+            channel TEXT PRIMARY KEY,
+            webhook TEXT
+        )""")
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS clips (
+            clip_id TEXT PRIMARY KEY,
+            channel TEXT,
+            message_id TEXT,
+            time_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )""")
+        conn.commit()
+
+# Auto-remove clips older than 1 day
+def cleanup_old_clips():
+    with sqlite3.connect(DB_PATH) as conn:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM clips WHERE time_created <= datetime('now', '-1 day')")
+        conn.commit()
+
+@app.before_request
+def before_every_request():
+    init_db()
+    cleanup_old_clips()
 
 @app.route("/")
 def home():
@@ -36,7 +67,7 @@ def login():
     return render_template("login.html")
 
 @app.route("/settings", methods=["GET", "POST"])
-
+@login_required
 def settings():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
