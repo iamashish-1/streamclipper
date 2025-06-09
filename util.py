@@ -103,6 +103,7 @@ def send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id, vide
             try:
                 message_id = r.json().get("id") if r.headers.get("Content-Type", "").startswith(
                     "application/json") else None
+                print("📦 Discord response:", r.json())
                 if message_id:
                     conn = sqlite3.connect(DB_PATH)
                     cur = conn.cursor()
@@ -110,6 +111,7 @@ def send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id, vide
                     cur.execute("INSERT OR REPLACE INTO clips (clip_id, channel, message_id) VALUES (?, ?, ?)", (
                         clip_id, channel_id, message_id
                     ))
+                    print(f"📥 Stored clip: {clip_id}, {video_id}, {message_id}")
                     conn.commit()
                     conn.close()
             except Exception as e:

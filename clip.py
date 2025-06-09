@@ -9,7 +9,6 @@ from util import (
 import sqlite3
 from discord_webhook import DiscordWebhook
 
-DB_PATH = "data/queries.db"
 
 def create_clip(chat_id, query, headers):
     user = get_user_details_from_headers(headers)
@@ -41,8 +40,11 @@ def delete_clip(clip_id):
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
+    clip_id = clip_id.upper()
     cur.execute("SELECT channel, message_id FROM clips WHERE clip_id=?", (clip_id,))
     result = cur.fetchone()
+    print("🔍 Clip fetch result:", result)
+
 
     if not result:
         return f"❌ Clip {clip_id} not found."
