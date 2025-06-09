@@ -30,7 +30,7 @@ def create_clip(chat_id, query, headers):
 
     success = send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id)
 
-    return f"Clipped {clip_id} - by {user.name}, Sent to discord" if success else "✅ Clip created, but failed to notify Discord."
+    return f"Streamclipper successfully clipped '{title}' - Clip id : {clip_id} by {user.name} with a dealy of {delay} seconds. Clip sent to discord successfully. " if success else "✅ Clip created, but failed to notify Discord."
 
 def delete_clip(clip_id):
     import sqlite3
