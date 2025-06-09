@@ -67,7 +67,7 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 Created with ❤️ by **Ashish Jaiswal**
 
 - 💬 Discord: [_.iamashish__](https://discord.com/users/_.iamashish__)
-- 🐛 Issues & Feedback: [GitHub Issues](https://github.com/yourusername/streamclipper/issues)
+- 🐛 Issues & Feedback: [GitHub Issues](https://github.com/iamashish-1//streamclipper/issues)
 
 
 
