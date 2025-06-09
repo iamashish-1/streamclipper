@@ -24,7 +24,6 @@ def init_db():
             channel TEXT PRIMARY KEY,
             webhook TEXT
         )""")
-        print("Created table 'Settings'")
         cur.execute("""
         CREATE TABLE IF NOT EXISTS clips (
             clip_id TEXT PRIMARY KEY,
@@ -32,7 +31,6 @@ def init_db():
             message_id TEXT,
             time_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )""")
-        print("Created table 'clips")
         conn.commit()
 
 @app.before_request

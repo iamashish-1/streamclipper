@@ -62,7 +62,7 @@ def get_stream_metadata(channel_id, chat_id):
                 cur.execute("REPLACE INTO chat_mapping VALUES (?, ?)", (chat_id, vid_id))
                 conn.commit()
                 conn.close()
-                print(data)
+                print("Metadata fetched, moving further...!")
                 return data
     except Exception as e:
         print("❌ scrapetube or YTCD failed:", e)

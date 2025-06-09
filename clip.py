@@ -32,7 +32,7 @@ def create_clip(chat_id, query, headers):
     url = f"<https://youtu.be/{video_id}?t={clip_time}>"
 
     success = send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id, video_id)
-
+    print("Clip successfully sent to Discord!")
     return f"Streamclipper successfully created clip [{clip_id}] — '{title}' by @{user.name}, with a delay of {delay} seconds. The clip was successfully sent to Discord." if success else "✅ Clip created, but failed to notify Discord."
 
 
@@ -66,8 +66,9 @@ def delete_clip(clip_id):
         print(f"⚠️ Failed to delete Discord message: {e}")
 
     cur.execute("DELETE FROM clips WHERE clip_id=?", (clip_id,))
+    print("Deleted clip from database and Discord!")
     conn.commit()
     conn.close()
 
-    return f"Streamclipper deleted clip with ID - {clip_id}"
+    return f"Streamclipper deleted clip with ID - '{clip_id}'"
 
