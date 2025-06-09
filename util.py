@@ -101,21 +101,23 @@ def send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id, vide
         r = requests.post(webhook, json=payload)
         if r.status_code in [200, 204]:
             try:
-                message_id = r.json().get("id") if r.headers.get("Content-Type", "").startswith(
-                    "application/json") else None
-                print("📦 Discord response:", r.json())
+                message_id = None
+                if r.headers.get("Content-Type", "").startswith("application/json"):
+                    try:
+                        message_id = r.json().get("id")
+                    except Exception as e:
+                        print("⚠️ Could not parse Discord response JSON:", e)
                 if message_id:
+                    print("💾 Saving clip to DB:", clip_id, channel_id, message_id)
                     conn = sqlite3.connect(DB_PATH)
                     cur = conn.cursor()
-                    cur.execute("CREATE TABLE IF NOT EXISTS clips (clip_id TEXT PRIMARY KEY, channel TEXT, message_id TEXT)")
                     cur.execute("INSERT OR REPLACE INTO clips (clip_id, channel, message_id) VALUES (?, ?, ?)", (
                         clip_id, channel_id, message_id
                     ))
-                    print(f"📥 Stored clip: {clip_id}, {video_id}, {message_id}")
                     conn.commit()
                     conn.close()
-            except Exception as e:
-                print("⚠️ Failed to store clip metadata:", e)
+                else:
+                    print("⚠️ No message ID returned from Discord")
         return r.status_code in [200, 204]
     except Exception as e:
         print("Webhook send error:", e)
