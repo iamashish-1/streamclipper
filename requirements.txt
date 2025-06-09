@@ -6,3 +6,4 @@ yt-dlp
 chat-downloader
 scrapetube
 python-dotenv
+discord_webhook
