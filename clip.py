@@ -4,10 +4,12 @@ from util import (
     get_user_details_from_headers,
     get_stream_metadata,
     seconds_to_hms,
-    send_discord_webhook
+    send_discord_webhook, DB_PATH
 )
 import sqlite3
 from discord_webhook import DiscordWebhook
+
+DB_PATH = "data/queries.db"
 
 def create_clip(chat_id, query, headers):
     user = get_user_details_from_headers(headers)
@@ -36,7 +38,7 @@ def create_clip(chat_id, query, headers):
 
 
 def delete_clip(clip_id):
-    conn = sqlite3.connect("queries.db")
+    conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
     cur.execute("SELECT channel, message_id FROM clips WHERE clip_id=?", (clip_id,))
