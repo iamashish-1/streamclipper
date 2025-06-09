@@ -5,6 +5,7 @@ from util import (
     seconds_to_hms,
     send_discord_webhook
 )
+from models import User
 
 def create_clip(chat_id, query, headers):
     user = get_user_details_from_headers(headers)
@@ -25,11 +26,11 @@ def create_clip(chat_id, query, headers):
     hms = seconds_to_hms(clip_time)
     clip_id = chat_id[-3:].upper() + str(timestamp_usec % 100000)
     title = query.replace("+", " ") if query else "Untitled"
-    url = f"https://youtu.be/{video_id}?t={clip_time}"
+    url = f"<https://youtu.be/{video_id}?t={clip_time}>"
 
     success = send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id)
 
-    return url if success else "✅ Clip created, but failed to notify Discord."
+    return f"Clipped {clip_id} - by {user.name}, Sent to discord" if success else "✅ Clip created, but failed to notify Discord."
 
 def delete_clip(clip_id):
     import sqlite3
