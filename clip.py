@@ -69,5 +69,5 @@ def delete_clip(clip_id):
     conn.commit()
     conn.close()
 
-    return f"✅ Deleted {clip_id}"
+    return f"Streamclipper deleted clip with ID - {clip_id}"
 
