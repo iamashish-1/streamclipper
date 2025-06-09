@@ -32,46 +32,57 @@ def create_clip(chat_id, query, headers):
 
     success = send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id)
 
-    return f"Streamclipper successfully created clip [{clip_id}] — '{title}' by {user.name}, with a delay of {delay} seconds. The clip was successfully sent to Discord." if success else "✅ Clip created, but failed to notify Discord."
+    return f"Streamclipper successfully created clip [{clip_id}] — '{title}' by @{user.name}, with a delay of {delay} seconds. The clip was successfully sent to Discord." if success else "✅ Clip created, but failed to notify Discord."
 
 
 def delete_clip(clip_id):
     conn = sqlite3.connect("queries.db")
     cur = conn.cursor()
 
-    cur.execute("CREATE TABLE IF NOT EXISTS settings (channel TEXT PRIMARY KEY, webhook TEXT)")
+    # Find the clip in the database based on ID suffix and timestamp window
+    cur.execute("""
+        SELECT channel_id, message_id, time_in_seconds, webhook
+        FROM queries
+        WHERE message_id LIKE ?
+    """, (f"%{clip_id[:3]}",))
 
-    # looking for channel id and webhook from db
-    cur.execute("SELECT channel, webhook FROM settings WHERE channel=?", (clip_id,))
-    row = cur.fetchone()
-    if not row:
+    clip = cur.fetchone()
+
+    if not clip:
+        conn.close()
         return f"❌ Clip {clip_id} not found."
 
-    channel_id, webhook_url = row
+    channel_id, message_id, clip_time, webhook_id = clip
 
-    #deletion in db with the help of clip id
-    try:
-        cur.execute(
-            "DELETE FROM QUERIES WHERE channel_id=? AND message_id LIKE ?",
-            (channel_id, f"%{clip_id[:3]}"),
-        )
-        conn.commit()
-    except Exception as e:
-        print(f"❌ Error during DB deletion: {e}")
-        conn.close()
-        return f"❌ Error during deletion process."
+    # Delete from database using precise match
+    cur.execute("""
+        DELETE FROM queries
+        WHERE channel_id = ? AND message_id LIKE ? AND time_in_seconds BETWEEN ? AND ?
+    """, (
+        channel_id,
+        f"%{clip_id[:3]}",
+        clip_time - 1,
+        clip_time + 1
+    ))
+    conn.commit()
 
-    #attempting to delete msg if webhook url is there
-    if webhook_url:
+    # Get the webhook URL from settings
+    cur.execute("SELECT webhook FROM settings WHERE channel = ?", (channel_id,))
+    row = cur.fetchone()
+    conn.close()
+
+    if row and webhook_id:
         try:
+            from discord_webhook import DiscordWebhook
+            webhook_url = row[0]
             webhook = DiscordWebhook(
                 url=webhook_url,
-                id=clip_id,
+                id=webhook_id,
                 allowed_mentions={"role": [], "user": [], "everyone": False}
             )
-            webhook.delete()  # Delete the Discord webhook message
+            webhook.delete()
         except Exception as e:
-            print(f"❌ Error deleting Discord webhook: {e}")
+            print(f"❌ Failed to delete webhook message: {e}")
 
-    conn.close()
     return f"✅ Clip {clip_id} deleted successfully."
+
