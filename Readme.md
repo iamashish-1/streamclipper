@@ -37,7 +37,7 @@
 
 ## 🧠 Nightbot Setup Guide
 
-### 🔹 Clipping Command - `clip <title>`
+### 🔹 Clipping Command - `!clip <title>`
 
 Add the following command to Nightbot to enable clipping:
 
