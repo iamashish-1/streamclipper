@@ -1,15 +1,14 @@
 import time
-
+import sqlite3
 from util import (
     get_user_details_from_headers,
     get_stream_metadata,
     seconds_to_hms,
     send_discord_webhook, DB_PATH
 )
-import sqlite3
 from discord_webhook import DiscordWebhook
 
-
+#-- Creating clip and clip information
 def create_clip(chat_id, query, headers):
     user = get_user_details_from_headers(headers)
     channel_id = user.id[:24]
@@ -35,7 +34,7 @@ def create_clip(chat_id, query, headers):
     print("Clip successfully sent to Discord!")
     return f"Streamclipper successfully created clip [{clip_id}] — '{title}' by @{user.name}, with a delay of {delay} seconds. The clip was successfully sent to Discord." if success else "✅ Clip created, but failed to notify Discord."
 
-
+#-- Function to delete clip from discord and database
 def delete_clip(clip_id):
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()

@@ -1,3 +1,4 @@
+#-- Contains information under class
 class User:
     def __init__(self, provider_id, display_name, user_level):
         self.id = provider_id

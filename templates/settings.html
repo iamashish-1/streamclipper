@@ -37,5 +37,11 @@
 
     <a href="/logout" class="btn btn-danger mt-4">Logout</a>
   </div>
+  <!-- Setting up Auto-logout below -->
+  <script>
+window.addEventListener("beforeunload", function (e) {
+    navigator.sendBeacon("/logout");
+});
+</script>
 </body>
 </html>

@@ -26,7 +26,8 @@
 - 🧹 Auto-deletes Discord messages when clips are removed
 - 🛠️ No api key used, 100% scrape and Cookie based
 
-> 💡 *Shoutout to [Suraj Bihari](https://streamsnip.com), founder of Streamsnip, whose work inspired this project. He provided invaluable feedback throughout the development of StreamClipper.*
+---
+> 💡 *Special Shoutout to [Suraj Bihari](https://surajbhari.com/), founder of [Streamsnip](https://streamsnip.com), whose work inspired this project. He provided invaluable feedback throughout the development of StreamClipper.*
 
 ---
 
@@ -43,8 +44,11 @@ Add the following command to Nightbot to enable clipping:
 ```markdown
 !addcom !clip $(urlfetch https://streamclipper.onrender.com/clip/$(chatid)/$(querystring)?delay=-30)
 ```
-🕒 You can customize the delay parameter (in seconds) by changing -30 to your desired value. If omitted, it defaults to -30.
+---
+- 🕒 You can customize the delay parameter (in seconds) by changing -30 to your desired value. If omitted, it defaults to -30.
 
+- ✅ Make sure you have filled [Google form](https://forms.gle/xtzp96MfkVup5TVq7) mentioned above because i need those details to integrate this to your disccord.
+---
 ### 🔹 Delete Clip Command
 
 Add this command to allow authorized users (e.g. moderators) to delete clips:
@@ -52,7 +56,8 @@ Add this command to allow authorized users (e.g. moderators) to delete clips:
 ```markdown
 !addcom !delete $(urlfetch https://streamclipper.onrender.com/delete/$(query)) -ul=moderator
 ```
-🔐 The -ul=moderator flag restricts usage to moderators, reducing the risk of misuse.
+---
+- 🔐 The "-ul=moderator" flag restricts usage to moderators, reducing the risk of misuse.
 
 ---
 
@@ -64,10 +69,10 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 
 ## 📬 Contact
 
-Created with ❤️ by **Ashish Jaiswal**
+Created with ❤️ by [**Ashish Jaiswal**](https://www.linkedin.com/in/ashishjaiswal2/)
 
-- 💬 Discord: [_.iamashish__](https://discord.com/users/_.iamashish__)
-- 🐛 Issues & Feedback: [GitHub Issues](https://github.com/iamashish-1//streamclipper/issues)
+- **💬 Discord: <ins>[_.iamashish__](https://discord.com/users/_.iamashish__)</ins>**
+- **🐛 Issues & Feedback: <ins>[GitHub Issues](https://github.com/iamashish-1//streamclipper/issues)</ins>**
 
 
 

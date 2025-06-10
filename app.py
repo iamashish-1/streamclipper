@@ -4,7 +4,6 @@ from flask import Flask, request, redirect, render_template, session
 from clip import create_clip, delete_clip
 from auth import login_required
 from dotenv import load_dotenv
-from datetime import datetime, timedelta
 
 load_dotenv()
 
@@ -14,7 +13,7 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY")
 DB_PATH = "data/queries.db"
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
-# Ensure required tables exist
+# Ensuring required tables exist
 print("Running init.db ---- ")
 def init_db():
     with sqlite3.connect(DB_PATH) as conn:
@@ -33,9 +32,11 @@ def init_db():
         )""")
         conn.commit()
 
+#-- We'll always initiate db to make sure table exists
 @app.before_request
 def before_every_request():
     init_db()
+    session.permanent = False  # session will expire when browser closes
 
 @app.route("/")
 def home():

@@ -17,6 +17,7 @@ role_icons = {
     "": ""
 }
 
+#-- Getting user details from Nightbot headers
 def get_user_details_from_headers(headers):
     user_header = headers.get("Nightbot-User", "")
     qs = parse_qs(user_header)
@@ -37,8 +38,9 @@ def get_user_details_from_headers(headers):
 
     return user
 
+#-- Scraping stream metadata
 def get_stream_metadata(channel_id, chat_id):
-    try:
+    try: #-- If the chat id is same, we will not fetch stream, instead we will use available data
         conn = sqlite3.connect(DB_PATH)
         cur = conn.cursor()
         cur.execute("CREATE TABLE IF NOT EXISTS chat_mapping (chat TEXT, video TEXT)")
@@ -70,12 +72,14 @@ def get_stream_metadata(channel_id, chat_id):
     print("⚠️ No valid live video found.")
     return None
 
+#-- Converting received time to HH:MM:SS
 def seconds_to_hms(seconds):
     h = seconds // 3600
     m = (seconds % 3600) // 60
     s = seconds % 60
     return f"{h}:{m:02}:{s:02}"
 
+#-- Function to send discord message with customization
 def send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id, video_id=None):
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
@@ -98,7 +102,7 @@ def send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id, vide
         payload["avatar_url"] = user.avatar
 
     try:
-        r = requests.post(webhook + "?wait=true", json=payload)
+        r = requests.post(webhook + "?wait=true", json=payload) #-- Gets message id of discord message
         if r.status_code in [200, 204]:
             try:
                 message_id = r.json().get("id")
@@ -107,7 +111,7 @@ def send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id, vide
                     cur = conn.cursor()
                     cur.execute(
                         "INSERT OR REPLACE INTO clips (clip_id, channel, message_id) VALUES (?, ?, ?)",
-                        (clip_id, channel_id, message_id)
+                        (clip_id, channel_id, message_id) #-- Inserts all these data in database so that we can use to modify clips.
                     )
                     conn.commit()
                     conn.close()
