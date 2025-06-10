@@ -1,8 +1,9 @@
+#-- Contains all the requirements
+
 Flask==2.3.3
 gunicorn==23.0.0
 requests
 beautifulsoup4
-yt-dlp
 chat-downloader
 scrapetube
 python-dotenv

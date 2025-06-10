@@ -1,3 +1,4 @@
+#-- Contains the files which will not be uploaded to github
 __pycache__/
 *.pyc
 .env
