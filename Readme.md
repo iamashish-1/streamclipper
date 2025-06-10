@@ -21,10 +21,10 @@
 **StreamClipper** is a lightweight, open-source alternative to [Streamsnip](https://streamsnip.com), tailored for YouTube streamers who want **automated clipping** using **Nightbot commands**. It includes **Discord integration**, ensures **full privacy**, and comes with **no usage limits**.
 
 ### ✅ Features
-
-- 🔧 Admin panel for managing webhooks  
+ 
 - ⏱️ Accurate clip timestamps with automatic Discord message updates  
 - 🧹 Auto-deletes Discord messages when clips are removed
+- 🛠️ No api key used, 100% scrape and Cookie based
 
 > 💡 *Shoutout to [Suraj Bihari](https://streamsnip.com), founder of Streamsnip, whose work inspired this project. He provided invaluable feedback throughout the development of StreamClipper.*
 
