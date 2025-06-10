@@ -37,7 +37,7 @@
 
 ## 🧠 Nightbot Setup Guide
 
-### 🔹 Clipping Command
+### 🔹 Clipping Command - `clip <title>`
 
 Add the following command to Nightbot to enable clipping:
 
@@ -49,7 +49,7 @@ Add the following command to Nightbot to enable clipping:
 
 - ✅ Make sure you have filled [Google form](https://forms.gle/xtzp96MfkVup5TVq7) mentioned above because i need those details to integrate this to your disccord.
 ---
-### 🔹 Delete Clip Command
+### 🔹 Delete Clip Command - `!delete <clip_id`
 
 Add this command to allow authorized users (e.g. moderators) to delete clips:
 
