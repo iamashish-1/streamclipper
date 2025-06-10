@@ -2,7 +2,7 @@
 
 [![Status](https://img.shields.io/badge/status-active-brightgreen)]()  
 [![Build](https://img.shields.io/badge/build-passing-blue)]()  
-[![License](https://img.shields.io/badge/license-MIT-blue)]()
+[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 
 ## ⚙️ Tech Stack
 
@@ -66,7 +66,19 @@ Add this command to allow authorized users (e.g. moderators) to delete clips:
 Pull requests are welcome! For major changes, please open an issue first to discuss what you'd like to change.
 
 ---
+## 🛡️ License
 
+📄 This project is licensed under the [Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/).
+
+🚫 **Commercial use is not allowed.**  
+✅ You are free to share and adapt the material, as long as you:
+- Give appropriate credit,
+- Provide a link to the license, and
+- Indicate if changes were made.
+
+📁 See the [LICENSE](./LICENSE) file for the full legal text.
+
+---
 ## 📬 Contact
 
 Created with ❤️ by [**Ashish Jaiswal**](https://www.linkedin.com/in/ashishjaiswal2/)
