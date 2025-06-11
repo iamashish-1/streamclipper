@@ -95,7 +95,7 @@ def send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id, vide
 
     payload = {
         "username": username,
-        "content": f"{clip_id} | **{title}**\n\n{hms}\n{url}\nDelayed by {delay} seconds."
+        "content": f"`{clip_id}` | **{title}**\n\n{hms}\n{url}\nDelayed by {delay} seconds."
     }
 
     if user.avatar and user.avatar.startswith("https://"):
