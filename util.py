@@ -13,7 +13,7 @@ COOKIES_FILE = os.getenv("YOUTUBE_COOKIES")
 role_icons = {
     "moderator": "🛡️",
     "owner": "👑",
-    "member": "💎",
+    "subscriber": "💎",
     "": ""
 }
 

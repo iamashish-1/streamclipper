@@ -32,7 +32,7 @@ def create_clip(chat_id, query, headers):
 
     success = send_discord_webhook(clip_id, title, hms, url, delay, user, channel_id, video_id)
     print("Clip successfully sent to Discord!")
-    return f"Streamclipper successfully created clip [{clip_id}] — '{title}' by @{user.name}, with a delay of {delay} seconds. The clip was successfully sent to Discord." if success else "✅ Clip created, but failed to notify Discord."
+    return f"Streamclipper successfully created clip [{clip_id}] — '{title}' by @{user.name}, with a delay of {delay} seconds. The clip was successfully sent to Discord." if success else "Streamclipper successfully created the clip but failed to notify Discord due to a webhook error."
 
 #-- Function to delete clip from discord and database
 def delete_clip(clip_id):
