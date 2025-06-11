@@ -77,7 +77,7 @@ def settings():
     #- sending discord welcome embed
         try:
             logo = os.getenv("LOGO")
-            wh = DiscordWebhook(url = webhook)
+            wh = DiscordWebhook(url = webhook, username = "StreamClipper", avatar_url = logo)
             embed = DiscordEmbed(
                 title = "🎬 Welcome to StreamClipper",
                 description = "This channel is now connfigured to receive clip from your **YouTube Live Streams** via StreamClipper.",
