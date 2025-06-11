@@ -4,6 +4,7 @@ from flask import Flask, request, redirect, render_template, session
 from clip import create_clip, delete_clip
 from auth import login_required
 from dotenv import load_dotenv
+from discord_webhook import DiscordEmbed, DiscordWebhook
 
 load_dotenv()
 
@@ -67,9 +68,28 @@ def settings():
     cur = conn.cursor()
     cur.execute("CREATE TABLE IF NOT EXISTS settings (channel TEXT PRIMARY KEY, webhook TEXT)")
     if request.method == "POST":
-        cur.execute("REPLACE INTO settings VALUES (?, ?)", (
-            request.form["channel"], request.form["webhook"]))
+        channel = request.form["channel"]
+        webhook = request.form["webhook"]
+
+        cur.execute("REPLACE INTO settings VALUES (?, ?)", (channel, webhook))
         conn.commit()
+
+    #- sending discord welcome embed
+        try:
+            logo = os.getenv("LOGO")
+            wh = DiscordWebhook(url = webhook)
+            embed = DiscordEmbed(
+                title = "🎬 Welcome to StreamClipper",
+                description = "This channel is now connfigured to receive clip from your **YouTube Live Streams** via StreamClipper.",
+                color = "FF0000"
+            )
+            embed.set_thumbnail(url = logo)
+            embed.set_footer(text = "StreamClipper initialized.", icon_url= logo)
+            wh.add_embed(embed)
+            wh.execute()
+            print("Channel configuration message sent to discord via webhook")
+        except Exception as e:
+            print("⚠️ Failed to send configuration message to discord")
     cur.execute("SELECT * FROM settings")
     data = cur.fetchall()
     conn.close()
