@@ -79,18 +79,15 @@ def settings():
             logo = os.getenv("LOGO")
             wh = DiscordWebhook(url = webhook, username = "StreamClipper", avatar_url = logo)
             embed = DiscordEmbed(
-                title="📺 StreamClipper Setup Complete!",
+                title="Welcome to StreamCliper !!!!",
                 description=(
-                    "Your channel is now configured to automatically receive clips "
-                    "from your **YouTube Live Streams** via **StreamClipper**. \n\n"
-                    "Sit back, stream, and let us handle the highlights! 🎉"
+                    "This channel is configured to get clips from your YouTube Live.\n"
+                    "Sit back, stream, and we’ll handle the highlights on your call!"
                 ),
                 color="FF0000"
             )
-            embed.set_thumbnail(url=logo)
+            embed.set_image(url=logo)
             embed.set_footer(text="StreamClipper is live and listening.", icon_url=logo)
-            embed.set_thumbnail(url = logo)
-            embed.set_footer(text = "StreamClipper initialized.", icon_url= logo)
             wh.add_embed(embed)
             wh.execute()
             print("Channel configuration message sent to discord via webhook")
