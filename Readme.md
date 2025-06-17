@@ -27,7 +27,7 @@
 - 🛠️ No api key used, 100% scrape and Cookie based
 
 ---
-> 💡 *Special Shoutout to [Suraj Bihari](https://surajbhari.com/), founder of [Streamsnip](https://streamsnip.com), whose work inspired this project. He provided invaluable feedback throughout the development of StreamClipper.*
+> 💡 *Special Shoutout to [Suraj Bhari](https://surajbhari.com/), founder of [Streamsnip](https://streamsnip.com), whose work inspired this project. He provided invaluable feedback throughout the development of StreamClipper.*
 
 ---
 
